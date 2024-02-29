@@ -1,3 +1,4 @@
+
 // cannot get this one to work
 const path = require('path');
 
@@ -10,9 +11,6 @@ module.exports = {
             use: 'ts-loader',
             exclude: '/node_modules/'
         }]
-    },
-    resolve: {
-        extensions: ['.ts', 'mts', '.js']
     },
     mode: 'development', // could be production which minifies everything
     output: {
