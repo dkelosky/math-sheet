@@ -1,5 +1,5 @@
 import $ from "jquery";
-import { everything } from "./math.mjs";
+// import { everything } from "./math.mjs";
 // window.$ = $;
 
 console.log("fck this place")
@@ -7,9 +7,9 @@ console.log("fck this place")
 // $.fn()
 $(() => {
 
-    $(`#fckingbutton`).on(`click`, () => {
+    $(`#mybutton`).on(`click`, () => {
         console.log(`you clicked the fcking button`)
-        console.log(everything())
+        // console.log(everything())
     });
 
 });

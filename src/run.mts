@@ -1,6 +1,5 @@
-import { everything, division, leftPad } from "./math.mjs"
+import { division } from "./math.mjs"
 
-// everything();
-division(3, 12, 3, 3, 3);
 
-// console.log(`'` + leftPad(1) + `'`)
+division(2, 12);
+// division(2, 3, 2, 3, 3);

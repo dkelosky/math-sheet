@@ -1,21 +1,5 @@
 import { writeFileSync } from "fs";
 
-export function getRandomInt(max: number, min = -1) {
-    let num = min - 1;
-    while (num < min) {
-        num = Math.floor(Math.random() * max + 1);
-    }
-    return num;
-}
-
-export function getDividend(divisibleBy: number, max: number, min: number) {
-    let num = 1;
-    while (num % divisibleBy !== 0) {
-        num = getRandomInt(max, min);
-    }
-    return num;
-}
-
 interface IProblem {
     symbol: string;
 }
@@ -26,13 +10,40 @@ interface IDivisionProblem extends IProblem {
     quotient: number;
 }
 
+export function getRandomInt(min: number, max: number) {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max + 1);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+}
+
+export function getDividend(divisibleBy: number, min: number, max: number) {
+    let num = getRandomInt(min, max);
+    while (num % divisibleBy !== 0) {
+        num = getRandomInt(min, max);
+    }
+    return num;
+}
+
+/**
+ * dividend ÷ divisor = quotient
+ * @param divisor - the divisor
+ * @param divisorMaxFactor - dividend = divisor * divisorMaxFactor
+ * @param min - min dividend, usually the same as divisor
+ * @param rows - number of rows in output
+ * @param cols - number of cols in output
+ */
 export function division(divisor: number, divisorMaxFactor: number, min = divisor, rows = 10, cols = 10) {
     const maxDividend = divisor * divisorMaxFactor;
     const problems: IDivisionProblem[] = [];
 
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
-            const dividend = getDividend(divisor, maxDividend, min);
+            let dividend = getDividend(divisor, min, maxDividend);
+            if (problems.length > 0) { // if at least 1 entry in array exists
+                while (problems[problems.length - 1].dividend === dividend) { // while dividend is the same as the previous
+                    dividend = getDividend(divisor, min, maxDividend); // prevent adjacent dups
+                }
+            }
             const problem: IDivisionProblem = {
                 dividend,
                 divisor,
@@ -61,7 +72,6 @@ export function leftPad(digit: number, padLen = 5, padChar = ` `) {
     return message;
 }
 
-
 export function generateHtml(problems: IDivisionProblem[], rows = 10, cols = 10) {
     const padLen = 5;
     const padChar = ` `;
@@ -70,7 +80,13 @@ export function generateHtml(problems: IDivisionProblem[], rows = 10, cols = 10)
 
     const header =
         `<html>\n` +
-        `<body>\n`;
+        `<body>\n` +
+        `<br>\n` +
+        `<br>\n` +
+        `<br>\n` +
+        `<br>\n` +
+        `<br>\n`
+        ;
 
     const tableHeader =
         `    <table>\n`;
@@ -109,136 +125,35 @@ export function generateHtml(problems: IDivisionProblem[], rows = 10, cols = 10)
         process.exit(1);
     }
 
-    for (let i = 0; i < rows; i++) {
-        htmlDocument += rowHeader;
-        let dividenRow = ``;
-        let divisorRow = ``;
-        let solutionRow = ``;
-        for (let j = 0; j < cols; j++) {
-            const index = i * j;
-            dividenRow += topDataHeader + leftPad(problems[index].dividend) + topDataFooter;
-            // console.log(dividenRow)
-            // process.exit(3)
-            if (j < cols - 1) dividenRow += emptyEntry;
+    let dividendRow = ``;
+    let divisorRow = ``;
+    let solutionRow = ``;
+    problems.forEach((problem, index) => {
+        // htmlDocument += rowHeader;
 
-            divisorRow += bottomDataHeader + problems[index].symbol + leftPad(problems[index].divisor, padLen - 1) + bottomDataFooter;
-            if (j < cols - 1) divisorRow += emptyEntry;
+        let i = index + 1;
 
-            solutionRow += topDataHeader + pad + topDataFooter;
-            if (j < cols - 1) solutionRow += emptyEntry;
+        dividendRow += topDataHeader + leftPad(problem.dividend) + topDataFooter;
+        divisorRow += bottomDataHeader + problem.symbol + leftPad(problem.divisor, padLen - 1) + bottomDataFooter;
+        solutionRow += topDataHeader + pad + topDataFooter;
+
+        if (i % cols === 0) {
+            htmlDocument += rowHeader + dividendRow + rowFooter;
+            htmlDocument += rowHeader + divisorRow + rowFooter;
+            htmlDocument += rowHeader + solutionRow + rowFooter;
+            htmlDocument += rowHeader + solutionRow + rowFooter;
+            dividendRow = ``;
+            divisorRow = ``;
+            solutionRow = ``;
+        } else {
+            dividendRow += emptyEntry;
+            divisorRow += emptyEntry;
+            solutionRow += emptyEntry;
         }
-        htmlDocument += rowHeader + dividenRow + rowFooter;
-        htmlDocument += rowHeader + divisorRow + rowFooter;
-        htmlDocument += rowHeader + solutionRow + rowFooter;
-    }
+
+    });
 
     htmlDocument += tableFooterer + footer;
     writeFileSync(`problems.html`, htmlDocument);
-
+    console.log(`wrote problems.html`);
 }
-
-// dividend / divisor = quotient
-
-export function everything() {
-
-    const divisor = 3;
-    const divisorMaxFactor = 12;
-    const max_dividend = divisor * divisorMaxFactor;
-    const rows = 10;
-    const cols = 10;
-    const spaces = `      `;
-    const newLine = `\r\n`
-
-    // get number <= max && >= min
-    const dividends = [];
-
-    for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-            dividends.push(getDividend(divisor, max_dividend, 2));
-        }
-    }
-
-    let colCounter = 0;
-    let line = '';
-    let doc = ``;
-    dividends.forEach((dividend) => {
-        colCounter++;
-        let digits = dividend.toString().length;
-
-        switch (digits) {
-            case 1:
-                line += `   ` + dividend;
-                break;
-            case 2:
-                line += `  ` + dividend;
-                break;
-            case 3:
-                line += ` ` + dividend;
-                break;
-            default:
-                break;
-        }
-
-        line += spaces;
-        if (colCounter === cols) {
-            line = line.trimEnd() + newLine
-            doc += line;
-            doc += addDivisorNextLine();
-            doc += addBlankLine();
-            doc += addSpaceline();
-            // reset
-            line = ``;
-            colCounter = 0;
-        }
-    })
-
-    function addDivisorNextLine() {
-
-        let line = ``;
-        // console.log(divisor)
-        for (let i = 0; i < cols; i++) {
-            line += `÷  ${divisor.toString()}${spaces}`;
-        }
-        line = line.trimEnd() + newLine;
-        // console.log(line)
-        return line;
-    };
-
-    function addBlankLine() {
-        let line = ``;
-        for (let i = 0; i < cols; i++) {
-            line += `----${spaces}`;
-        }
-        line = line.trimEnd() + newLine;
-        return line;
-    }
-
-    function addSpaceline() {
-        let line = ``;
-        // for (let i = 0; i < cols; i++) {
-        // line += `   ${spaces}`;
-        // }
-        line += newLine;
-        // for (let i = 0; i < cols; i++) {
-        // line += `   ${spaces}`;
-        // }
-        line += newLine;
-        // for (let i = 0; i < cols; i++) {
-        // line += `   ${spaces}`;
-        // }
-        // line += newLine;
-        return line;
-    }
-
-    console.log(doc);
-}
-
-
-
-// const line = [];
-
-// for (let i = 0; i < cols; i++) {
-//     for (let j = 0; j < rows; j++) {
-//        push(getRandomInt(40, 2));
-//     }
-// }
