@@ -1,7 +1,7 @@
-import { addition, division, multiplication } from "./math.mjs"
+import { addition, division, multiplication, subtraction } from "./math.mjs"
 
 
-division(2, 12);
+// division(2);
+subtraction(2);
 // multiplication(8);
 // addition(6)
-// division(2, 3, 2, 3, 3);

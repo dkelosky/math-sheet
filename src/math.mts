@@ -12,13 +12,18 @@ interface IProblem {
 
 }
 
-export function getRandomInt(min: number, max: number) {
+interface ITerms {
+    firstTerm: number;
+    secondTerm: number;
+}
+
+function getRandomInt(min: number, max: number) {
     const minCeiled = Math.ceil(min);
     const maxFloored = Math.floor(max + 1);
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
 }
 
-export function getDividend(divisibleBy: number, min: number, max: number) {
+function getDividend(divisibleBy: number, min: number, max: number) {
     let num = getRandomInt(min, max);
     while (num % divisibleBy !== 0) {
         num = getRandomInt(min, max);
@@ -26,24 +31,17 @@ export function getDividend(divisibleBy: number, min: number, max: number) {
     return num;
 }
 
-export interface ITerms {
-    firstTerm: number;
-    secondTerm: number;
-}
-
-export function randomizeOrder(primaryTerm: number, extraTerm: number): ITerms {
+function randomizeOrder(extraTerm: number, primaryTerm: number): ITerms {
     let choice = getRandomInt(0, 1);
 
-    // assume 0
-    let terms: ITerms = {
-        firstTerm: primaryTerm,
-        secondTerm: extraTerm,
+    let terms: ITerms = { // assume 0
+        firstTerm: extraTerm,
+        secondTerm: primaryTerm,
     };
 
-    // flip if odd value
-    if (choice === 1) {
-        terms.firstTerm = extraTerm;
-        terms.secondTerm = primaryTerm;
+    if (choice === 1) { // flip if odd
+        terms.firstTerm = primaryTerm;
+        terms.secondTerm = extraTerm;
     }
 
     return terms;
@@ -51,36 +49,68 @@ export function randomizeOrder(primaryTerm: number, extraTerm: number): ITerms {
 }
 
 /**
- * term x term = product
- * @param primaryTerm e.g. testing x 3, 3 would be in each problem
- * @param min - min number, usually 0
- * @param max - max number - usually 12 (unless x 11, then it's 19)
- * @param rows - output rows
- * @param cols - output cols
+ * addend + addend = sum
+ * @param primaryTerm
+ * @param min
+ * @param max
+ * @param rows
+ * @param cols
  */
-export function multiplication(primaryTerm: number, min = 0, max = 12, rows = 10, cols = 10) {
-    mathCommon(`x`, `multiplication`, ((first, second) => first * second), primaryTerm, min, max, rows, cols);
+export function addition(addend: number, min = 0, max = 12, rows = 10, cols = 10) {
+    mathCommon(`+`, `addition`, true, ((first, second) => first + second), addend, min, max, rows, cols);
 }
 
-export function addition(primaryTerm: number, min = 0, max = 12, rows = 10, cols = 10) {
-    mathCommon(`+`, `addition`, ((first, second) => first + second), primaryTerm, min, max, rows, cols);
+/**
+ * multiplicand * multiplier = product
+ * @param multiplier
+ * @param min
+ * @param max
+ * @param rows
+ * @param cols
+ */
+export function multiplication(multiplier: number, min = 0, max = 12, rows = 10, cols = 10) {
+    mathCommon(`x`, `multiplication`, true, ((first, second) => first * second), multiplier, min, max, rows, cols);
 }
 
-function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm: number, min = 0, max = 12, rows = 10, cols = 10) {
+/**
+ * subtrahend - minuend = difference
+ * @param subtrahend
+ * @param min
+ * @param max
+ * @param rows
+ * @param cols
+ */
+export function subtraction(subtrahend: number, min = subtrahend, max = subtrahend * 12, rows = 10, cols = 10) {
+    mathCommon(`-`, `subtraction`, false, ((first, second) => first - second), subtrahend, min, max, rows, cols);
+}
+
+/**
+ * dividend - divisor = quotient
+ * @param divisor
+ * @param min
+ * @param max
+ * @param rows
+ * @param cols
+ */
+export function division(divisor: number, min = divisor, max = divisor * 12, rows = 10, cols = 10) {
+    mathCommon(`÷`, `division`, false, ((first, second) => first / second), divisor, min, max, rows, cols);
+}
+
+function mathCommon(symbol: string, type: operation, randomOrder = true, answer: answer, primaryTerm: number, min = 0, max = 12, rows = 10, cols = 10) {
     const problems: IProblem[] = [];
 
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
-            let extraTerm = getRandomInt(min, max);
-            let terms: ITerms = randomizeOrder(primaryTerm, extraTerm);
+            let extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);
+            let terms: ITerms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : {firstTerm: extraTerm, secondTerm: primaryTerm};
             let firstTerm = terms.firstTerm;
             let secondTerm = terms.secondTerm;
 
             if (problems.length > 0) { // if at least 1 entry in array exists
                 while (problems[problems.length - 1].firstTerm === firstTerm &&
                     problems[problems.length - 1].secondTerm === secondTerm) { // while problem is the same as the previous
-                    extraTerm = getRandomInt(min, max);
-                    terms = randomizeOrder(primaryTerm, extraTerm);
+                    extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);; // try another
+                    terms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : {firstTerm: extraTerm, secondTerm: primaryTerm};
                     firstTerm = terms.firstTerm;
                     secondTerm = terms.secondTerm;
                 }
@@ -97,40 +127,7 @@ function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm
         }
     }
 
-    generateHtml(problems, rows, cols);
-}
-
-/**
- * dividend ÷ divisor = quotient
- * @param divisor - the divisor
- * @param divisorMaxFactor - dividend = divisor * divisorMaxFactor
- * @param min - min dividend, usually the same as divisor
- * @param rows - number of rows in output
- * @param cols - number of cols in output
- */
-export function division(divisor: number, divisorMaxFactor: number, min = divisor, rows = 10, cols = 10) {
-    const maxDividend = divisor * divisorMaxFactor;
-    const problems: IProblem[] = [];
-
-    for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-            let dividend = getDividend(divisor, min, maxDividend);
-            if (problems.length > 0) { // if at least 1 entry in array exists
-                while (problems[problems.length - 1].firstTerm === dividend) { // while dividend is the same as the previous
-                    dividend = getDividend(divisor, min, maxDividend); // prevent adjacent dups
-                }
-            }
-            const problem: IProblem = {
-                firstTerm: dividend,
-                secondTerm: divisor,
-                answer: dividend / divisor,
-                symbol: `÷`,
-                type: `division`
-            };
-            problems.push(problem);
-        }
-    }
-
+    console.log(problems)
     generateHtml(problems, rows, cols);
 }
 
