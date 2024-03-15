@@ -3,6 +3,8 @@ import { writeFileSync } from "fs";
 type operation = `addition` | `subtraction` | `multiplication` | `division`;
 type answer = ((first: number, second: number) => number);
 
+const PAD_LEN = 4;
+
 interface IProblem {
     symbol: string;
     firstTerm: number;
@@ -131,7 +133,7 @@ function mathCommon(symbol: string, type: operation, randomOrder = true, answer:
     generateHtml(problems, rows, cols);
 }
 
-export function leftPad(digit: number, padLen = 5, padChar = ` `) {
+export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
     let digitLen = digit.toString().length;
     if (digitLen > padLen) {
         console.log(`unexpected len`)
@@ -147,7 +149,7 @@ export function leftPad(digit: number, padLen = 5, padChar = ` `) {
 }
 
 export function generateHtml(problems: IProblem[], rows = 10, cols = 10) {
-    const padLen = 5;
+    const padLen = PAD_LEN;
     const padChar = ` `;
     let pad = ``;
     for (let i = 0; i < padLen; i++) pad += padChar;
@@ -214,8 +216,10 @@ export function generateHtml(problems: IProblem[], rows = 10, cols = 10) {
         if (i % cols === 0) {
             htmlDocument += rowHeader + dividendRow + rowFooter;
             htmlDocument += rowHeader + divisorRow + rowFooter;
+
             htmlDocument += rowHeader + solutionRow + rowFooter;
             htmlDocument += rowHeader + solutionRow + rowFooter;
+
             dividendRow = ``;
             divisorRow = ``;
             solutionRow = ``;
