@@ -2,13 +2,13 @@ import $ from "jquery";
 // import { everything } from "./math.mjs";
 // window.$ = $;
 
-console.log("fck this place")
+console.log("this place")
 
 // $.fn()
 $(() => {
 
     $(`#mybutton`).on(`click`, () => {
-        console.log(`you clicked the fcking button`)
+        console.log(`you clicked the button`)
         // console.log(everything())
     });
 

@@ -11,7 +11,6 @@ interface IProblem {
     secondTerm: number;
     answer: number;
     type: operation;
-
 }
 
 interface ITerms {
@@ -53,84 +52,152 @@ function randomizeOrder(extraTerm: number, primaryTerm: number): ITerms {
 /**
  * addend + addend = sum
  * @param primaryTerm
+ * @param sheetCount
+ * @param includeAnswer
  * @param min
  * @param max
  * @param rows
  * @param cols
  */
-export function addition(addend: number, min = 0, max = 12, rows = 10, cols = 10) {
-    mathCommon(`+`, `addition`, true, ((first, second) => first + second), addend, min, max, rows, cols);
+export function addition(addend: number, sheetCount = 1, includeAnswer = false, min = 0, max = 12, rows = 10, cols = 10) {
+    const options = {
+        sheetCount,
+        includeAnswer,
+        min,
+        max,
+        rows,
+        cols,
+    };
+    mathCommon(`+`, `addition`, ((first, second) => first + second), addend, options);
 }
 
 /**
  * multiplicand * multiplier = product
  * @param multiplier
+ * @param sheetCount
+ * @param includeAnswer
  * @param min
  * @param max
  * @param rows
  * @param cols
  */
-export function multiplication(multiplier: number, min = 0, max = 12, rows = 10, cols = 10) {
-    mathCommon(`x`, `multiplication`, true, ((first, second) => first * second), multiplier, min, max, rows, cols);
+export function multiplication(multiplier: number, sheetCount = 1, includeAnswer = false, min = 0, max = 12, rows = 10, cols = 10) {
+    const options = {
+        sheetCount,
+        includeAnswer,
+        min,
+        max,
+        rows,
+        cols,
+    };
+    mathCommon(`x`, `multiplication`, ((first, second) => first * second), multiplier, options);
 }
 
 /**
  * subtrahend - minuend = difference
  * @param subtrahend
+ * @param sheetCount
+ * @param includeAnswer
  * @param min
  * @param max
  * @param rows
  * @param cols
  */
-export function subtraction(subtrahend: number, min = subtrahend, max = subtrahend * 12, rows = 10, cols = 10) {
-    mathCommon(`-`, `subtraction`, false, ((first, second) => first - second), subtrahend, min, max, rows, cols);
+export function subtraction(subtrahend: number, sheetCount = 1, includeAnswer = false, min = subtrahend, max = subtrahend * 12, rows = 10, cols = 10) {
+    const options = {
+        sheetCount,
+        includeAnswer,
+        min,
+        max,
+        rows,
+        cols,
+        randomOrder: false,
+    };
+    mathCommon(`-`, `subtraction`, ((first, second) => first - second), subtrahend, options);
 }
 
 /**
  * dividend - divisor = quotient
  * @param divisor
+ * @param sheetCount
+ * @param includeAnswer
  * @param min
  * @param max
  * @param rows
  * @param cols
  */
-export function division(divisor: number, min = divisor, max = divisor * 12, rows = 10, cols = 10) {
-    mathCommon(`÷`, `division`, false, ((first, second) => first / second), divisor, min, max, rows, cols);
+export function division(divisor: number, sheetCount = 1, includeAnswer = false, min = divisor, max = divisor * 12, rows = 10, cols = 10) {
+    const options = {
+        sheetCount,
+        includeAnswer,
+        min,
+        max,
+        rows,
+        cols,
+        randomOrder: false,
+    };
+    mathCommon(`÷`, `division`, ((first, second) => first / second), divisor, options);
 }
 
-function mathCommon(symbol: string, type: operation, randomOrder = true, answer: answer, primaryTerm: number, min = 0, max = 12, rows = 10, cols = 10) {
-    const problems: IProblem[] = [];
+interface options {
+    min: number;
+    max: number;
+    rows: number;
+    cols: number;
+    randomOrder?: boolean;
+    sheetCount?: number;
+    includeAnswer?: boolean
+}
 
-    for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-            let extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);
-            let terms: ITerms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : {firstTerm: extraTerm, secondTerm: primaryTerm};
-            let firstTerm = terms.firstTerm;
-            let secondTerm = terms.secondTerm;
+function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm: number, options: options) {
+    // function mathCommon(symbol: string, type: operation, randomOrder = true, answer: answer, primaryTerm: number, min = 0, max = 12, rows = 10, cols = 10) {
 
-            if (problems.length > 0) { // if at least 1 entry in array exists
-                while (problems[problems.length - 1].firstTerm === firstTerm &&
-                    problems[problems.length - 1].secondTerm === secondTerm) { // while problem is the same as the previous
-                    extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);; // try another
-                    terms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : {firstTerm: extraTerm, secondTerm: primaryTerm};
-                    firstTerm = terms.firstTerm;
-                    secondTerm = terms.secondTerm;
+    const min = options.min;
+    const max = options.max;
+    const rows = options.rows;
+    const cols = options.cols;
+    const randomOrder = options.randomOrder ?? true;
+    const sheetCount = options.sheetCount ?? 1;
+    const includeAnswer = options.includeAnswer ?? false;
+
+    for (let index = 0; index < sheetCount; index++) {
+
+
+        const problems: IProblem[] = [];
+
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                let extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);
+                let terms: ITerms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : { firstTerm: extraTerm, secondTerm: primaryTerm };
+                let firstTerm = terms.firstTerm;
+                let secondTerm = terms.secondTerm;
+
+                if (problems.length > 0) { // if at least 1 entry in array exists
+                    while (problems[problems.length - 1].firstTerm === firstTerm &&
+                        problems[problems.length - 1].secondTerm === secondTerm) { // while problem is the same as the previous
+                        extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);; // try another
+                        terms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : { firstTerm: extraTerm, secondTerm: primaryTerm };
+                        firstTerm = terms.firstTerm;
+                        secondTerm = terms.secondTerm;
+                    }
                 }
-            }
 
-            const problem: IProblem = {
-                firstTerm,
-                secondTerm,
-                answer: answer(firstTerm, secondTerm),
-                symbol,
-                type,
-            };
-            problems.push(problem);
+                const problem: IProblem = {
+                    firstTerm,
+                    secondTerm,
+                    answer: answer(firstTerm, secondTerm),
+                    symbol,
+                    type,
+                };
+                problems.push(problem);
+            }
         }
+
+        console.log(problems)
+        generateHtml(problems, rows, cols, index, false);
+        if (includeAnswer) generateHtml(problems, rows, cols, index, true);
     }
 
-    console.log(problems)
-    generateHtml(problems, rows, cols);
 }
 
 export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
@@ -148,7 +215,7 @@ export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
     return message;
 }
 
-export function generateHtml(problems: IProblem[], rows = 10, cols = 10) {
+export function generateHtml(problems: IProblem[], rows = 10, cols = 10, index = 0, includeAnswer = false) {
     const padLen = PAD_LEN;
     const padChar = ` `;
     let pad = ``;
@@ -201,37 +268,38 @@ export function generateHtml(problems: IProblem[], rows = 10, cols = 10) {
         process.exit(1);
     }
 
-    let dividendRow = ``;
-    let divisorRow = ``;
+    let firstTerm = ``;
+    let secondTerm = ``;
     let solutionRow = ``;
     problems.forEach((problem, index) => {
         // htmlDocument += rowHeader;
 
         let i = index + 1;
 
-        dividendRow += topDataHeader + leftPad(problem.firstTerm) + topDataFooter;
-        divisorRow += bottomDataHeader + problem.symbol + leftPad(problem.secondTerm, padLen - 1) + bottomDataFooter;
-        solutionRow += topDataHeader + pad + topDataFooter;
+        firstTerm += topDataHeader + leftPad(problem.firstTerm) + topDataFooter;
+        secondTerm += bottomDataHeader + problem.symbol + leftPad(problem.secondTerm, padLen - 1) + bottomDataFooter;
+        solutionRow += (includeAnswer) ? topDataHeader + leftPad(problem.answer) + topDataFooter : topDataHeader + pad + topDataFooter;
 
         if (i % cols === 0) {
-            htmlDocument += rowHeader + dividendRow + rowFooter;
-            htmlDocument += rowHeader + divisorRow + rowFooter;
+            htmlDocument += rowHeader + firstTerm + rowFooter;
+            htmlDocument += rowHeader + secondTerm + rowFooter;
 
             htmlDocument += rowHeader + solutionRow + rowFooter;
-            htmlDocument += rowHeader + solutionRow + rowFooter;
+            htmlDocument += emptyEntry;
 
-            dividendRow = ``;
-            divisorRow = ``;
+            firstTerm = ``;
+            secondTerm = ``;
             solutionRow = ``;
         } else {
-            dividendRow += emptyEntry;
-            divisorRow += emptyEntry;
+            firstTerm += emptyEntry;
+            secondTerm += emptyEntry;
             solutionRow += emptyEntry;
         }
 
     });
 
     htmlDocument += tableFooter + footer;
-    writeFileSync(`problems.html`, htmlDocument);
-    console.log(`wrote problems.html`);
+    const file = (includeAnswer) ? `answers${index}.html` : `problems${index}.html`;
+    writeFileSync(file, htmlDocument);
+    console.log(`wrote ${file}`);
 }

@@ -1,5 +1,9 @@
 #
 
+`npx tsc --watch`
+
+Webpack garbage is for later. 
+
 ## Dev
 
 For now easiest to do `npx tsc --watch` and `npx webpack --watch`.  Webpack looks at the lib folder.  It should would with webpack alone but is too difficult.
