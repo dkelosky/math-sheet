@@ -59,7 +59,7 @@ function randomizeOrder(extraTerm: number, primaryTerm: number): ITerms {
  * @param rows
  * @param cols
  */
-export function addition(addend: number, sheetCount = 1, includeAnswer = false, min = 0, max = 12, rows = 10, cols = 10) {
+export function addition(addend: number, sheetCount = 1, includeAnswer = false, min = 0, max = 12, rows = 10, cols = 10, oneThruFirst = false) {
     const options = {
         sheetCount,
         includeAnswer,
@@ -67,6 +67,7 @@ export function addition(addend: number, sheetCount = 1, includeAnswer = false, 
         max,
         rows,
         cols,
+        oneThruFirst,
     };
     mathCommon(`+`, `addition`, ((first, second) => first + second), addend, options);
 }
@@ -146,7 +147,8 @@ interface options {
     cols: number;
     randomOrder?: boolean;
     sheetCount?: number;
-    includeAnswer?: boolean
+    includeAnswer?: boolean;
+    oneThruFirst?: boolean;
 }
 
 function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm: number, options: options) {
@@ -159,16 +161,17 @@ function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm
     const randomOrder = options.randomOrder ?? true;
     const sheetCount = options.sheetCount ?? 1;
     const includeAnswer = options.includeAnswer ?? false;
+    const oneThruFirst = options.oneThruFirst ?? false;
 
     for (let index = 0; index < sheetCount; index++) {
-
 
         const problems: IProblem[] = [];
 
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < cols; j++) {
+                let altTerm = oneThruFirst ? getRandomInt(min, max) : primaryTerm;
                 let extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);
-                let terms: ITerms = randomOrder ? randomizeOrder(extraTerm, primaryTerm) : { firstTerm: extraTerm, secondTerm: primaryTerm };
+                let terms: ITerms = randomOrder ? randomizeOrder(extraTerm, altTerm) : { firstTerm: extraTerm, secondTerm: altTerm };
                 let firstTerm = terms.firstTerm;
                 let secondTerm = terms.secondTerm;
 
