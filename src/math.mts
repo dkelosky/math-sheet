@@ -104,7 +104,7 @@ export function multiplication(multiplier: number, sheetCount = 1, includeAnswer
  * @param rows
  * @param cols
  */
-export function subtraction(subtrahend: number, sheetCount = 1, includeAnswer = false, min = subtrahend, max = subtrahend * 12, rows = 10, cols = 10) {
+export function subtraction(subtrahend: number, sheetCount = 1, includeAnswer = false, min = subtrahend, max = subtrahend * 12, rows = 10, cols = 10, oneThruFirst = false) {
     const options = {
         sheetCount,
         includeAnswer,
@@ -113,6 +113,7 @@ export function subtraction(subtrahend: number, sheetCount = 1, includeAnswer = 
         rows,
         cols,
         randomOrder: false,
+        oneThruFirst,
     };
     mathCommon(`-`, `subtraction`, ((first, second) => first - second), subtrahend, options);
 }
@@ -163,6 +164,10 @@ function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm
     const includeAnswer = options.includeAnswer ?? false;
     const oneThruFirst = options.oneThruFirst ?? false;
 
+    // console.log(randomOrder)
+    // console.log(options.randomOrder)
+    // process.exit(8)
+
     for (let index = 0; index < sheetCount; index++) {
 
         const problems: IProblem[] = [];
@@ -171,7 +176,16 @@ function mathCommon(symbol: string, type: operation, answer: answer, primaryTerm
             for (let j = 0; j < cols; j++) {
                 let altTerm = oneThruFirst ? getRandomInt(min, max) : primaryTerm;
                 let extraTerm = type === `division` ? getDividend(primaryTerm, min, max) : getRandomInt(min, max);
+
+                // TODO(Kelosky): order should say which order because extra term for division is larger than extra term for subtraction
                 let terms: ITerms = randomOrder ? randomizeOrder(extraTerm, altTerm) : { firstTerm: extraTerm, secondTerm: altTerm };
+
+                if (type === `subtraction`) {
+                    // TODO(Kelosky): ugh
+                    extraTerm = getRandomInt(min, (altTerm > 10) ? 10 : altTerm);
+                    terms = { firstTerm: altTerm, secondTerm: extraTerm}
+                }
+
                 let firstTerm = terms.firstTerm;
                 let secondTerm = terms.secondTerm;
 
