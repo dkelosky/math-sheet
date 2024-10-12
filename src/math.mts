@@ -4,6 +4,9 @@ type operation = `addition` | `subtraction` | `multiplication` | `division`;
 type operator = `+` | `-` | `x` | `÷`;
 type answer = (first: number, second: number) => number;
 
+export const ROWS = 10;
+export const COLS = 10;
+
 const PAD_LEN = 4;
 
 interface IProblem {
@@ -15,10 +18,10 @@ interface IProblem {
 }
 
 interface options {
-  min: number;
-  max: number;
-  rows: number;
-  cols: number;
+  min?: number;
+  max?: number;
+  rows?: number;
+  cols?: number;
   randomOrder?: boolean;
   oneThruFirst?: boolean; // means first parm will be a random [int 1 - first parm]
   primaryTerm: number;
@@ -58,15 +61,10 @@ export function addition(options: options) {
   return problems;
 }
 
-/**
- * Calls addition and alters problems
- * @param options
- * @returns
- */
 export function subtraction(options: options) {
   let oldPrintOption = options.print;
   options.print = false;
-  const problems = inverseAddition(addition(options));
+  const problems = inverseProblem(addition(options), `-`, `subtraction`);
   if (oldPrintOption) console.log(problems);
   return problems;
 }
@@ -76,11 +74,11 @@ export function subtraction(options: options) {
  * @param problems
  * @returns
  */
-function inverseAddition(problems: IProblem[]) {
+function inverseProblem(problems: IProblem[], symbol: operator, type: operation) {
   return problems.map<IProblem>((problem: IProblem) => {
     return {
-      type: `subtraction`,
-      symbol: `-`,
+      type,
+      symbol,
       firstTerm: problem.answer,
       secondTerm: problem.secondTerm,
       answer: problem.firstTerm,
@@ -88,66 +86,28 @@ function inverseAddition(problems: IProblem[]) {
   });
 }
 
-/**
- * multiplicand * multiplier = product
- * @param multiplier
- * @param min
- * @param max
- * @param rows
- * @param cols
- */
-export function multiplication(
-  multiplier: number,
-  min = 0,
-  max = 12,
-  rows = 10,
-  cols = 10
-) {
-  const options: options = {
-    symbol: `x`,
-    type: `multiplication`,
-    answer: (first, second) => first * second,
-    primaryTerm: multiplier,
-    min,
-    max,
-    rows,
-    cols,
-  };
-  return mathCommon(options);
+// 0 12 10 10
+export function multiplication(options: options) {
+  options.symbol =  `x`;
+  options.type = `multiplication`;
+  options.answer = (first, second) => first * second;
+
+  const problems = mathCommon(options);
+  if (options.print) console.log(problems);
+  return problems;
 }
 
-/**
- * dividend - divisor = quotient
- * @param divisor
- * @param min
- * @param max
- * @param rows
- * @param cols
- */
-export function division(
-  divisor: number,
-  min = divisor,
-  max = divisor * 12,
-  rows = 10,
-  cols = 10
-) {
-  const options: options = {
-    symbol: `÷`,
-    type: `division`,
-    answer: (first, second) => first / second,
-    primaryTerm: divisor,
-    min,
-    max,
-    rows,
-    cols,
-    randomOrder: false,
-  };
-  return mathCommon(options);
+export function division(options: options) {
+  let oldPrintOption = options.print;
+  options.print = false;
+  const problems = inverseProblem(multiplication(options), `÷`, `division`);
+  if (oldPrintOption) console.log(problems);
+  return problems;
 }
 
 function generateProblem(options: options) {
   let mainTerm = options.oneThruFirst
-    ? getRandomInt(options.min, options.max)
+    ? getRandomInt(options.min!, options.max!)
     : options.primaryTerm; //alternative term is primary term or min - max if `oneThruFirst` specified
 
   let extraTerm;
@@ -155,20 +115,11 @@ function generateProblem(options: options) {
   let firstTerm;
   let secondTerm;
 
-  switch (options.type) {
-    case `division`:
-      extraTerm = getDividend(options.primaryTerm, options.min, options.max);
-      [firstTerm, secondTerm] = [extraTerm, mainTerm];
-      break;
-    case `addition`:
-    case `multiplication`:
-    default:
-      extraTerm = options.secondTerm ?? getRandomInt(options.min, options.max);
-      [firstTerm, secondTerm] = options.randomOrder
-        ? randomizeOrder(extraTerm, mainTerm)
-        : [mainTerm, extraTerm];
-      break;
-  }
+  extraTerm = options.secondTerm ?? getRandomInt(options.min!, options.max!);
+  [firstTerm, secondTerm] = options.randomOrder
+    ? randomizeOrder(extraTerm, mainTerm)
+    : [mainTerm, extraTerm];
+
 
   const problem: IProblem = {
     firstTerm,
@@ -182,43 +133,48 @@ function generateProblem(options: options) {
 }
 
 function validateOptions(options: options) {
+  if (!options.rows) {
+    throw new Error(`Error: rows is required`);
+  }
+  if (!options.cols) {
+    throw new Error(`Error: cols is required`);
+  }
+  if (options.min == null) {
+    throw new Error(`Error: min is required`);
+  }
+  if (!options.max) {
+    throw new Error(`Error: max is required`);
+  }
   if (!options.type) {
     throw new Error(`Error: type is required`);
   }
-
   if (!options.symbol) {
     throw new Error(`Error: symbol is required`);
   }
-
   if (!options.answer) {
     throw new Error(`Error: answer is required`);
   }
-
   if (options.symbol === `+` && options.type !== `addition`) {
-    throw new Error(
-      `Error: symbol '${options.symbol}' does not match operation '${options.type}'.`
-    );
+    throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.type}'.`);
   }
   if (options.symbol === `-` && options.type !== `subtraction`) {
-    throw new Error(
-      `Error: symbol '${options.symbol}' does not match operation '${options.type}'.`
-    );
+    throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.type}'.`);
   }
   if (options.symbol === `x` && options.type !== `multiplication`) {
-    throw new Error(
-      `Error: symbol '${options.symbol}' does not match operation '${options.type}'.`
-    );
+    throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.type}'.`);
   }
   if (options.secondTerm && options.oneThruFirst === false) {
-    throw new Error(
-      `Error: cannot generate sheet of the same problem`
-    );
+    throw new Error(`Error: cannot generate sheet of the same problem`);
   }
 }
 
 function mathCommon(options: options) {
   options.randomOrder = options.randomOrder ?? true;
   options.oneThruFirst = options.oneThruFirst ?? false;
+  options.rows = options.rows ?? 10;
+  options.cols = options.cols ?? 10;
+  options.min = options.min ?? 0;
+  options.max = options.max ?? 10;
 
   validateOptions(options);
 
@@ -226,6 +182,7 @@ function mathCommon(options: options) {
 
   for (let i = 0; i < options.rows; i++) {
     for (let j = 0; j < options.cols; j++) {
+
       let newProblem = generateProblem(options);
 
       if (problems.length > 0) {
@@ -262,8 +219,8 @@ export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
 
 export function generateHtml(
   problems: IProblem[],
-  rows = 10,
-  cols = 10,
+  rows = ROWS,
+  cols = COLS,
   suffix = "",
   includeAnswer = false
 ) {
