@@ -40,6 +40,14 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 }
 
+/**
+ * Can return a dividend divisible by the first input number within the minimum to maximum bounds
+ * @deprecated
+ * @param divisibleBy
+ * @param min
+ * @param max
+ * @returns
+ */
 function getDividend(divisibleBy: number, min: number, max: number) {
   let num = getRandomInt(min, max);
   while (num % divisibleBy !== 0) {
@@ -69,24 +77,6 @@ export function subtraction(options: options) {
   return problems;
 }
 
-/**
- * Flip input addition problems to be subtraction problems
- * @param problems
- * @returns
- */
-function inverseProblem(problems: IProblem[], symbol: operator, type: operation) {
-  return problems.map<IProblem>((problem: IProblem) => {
-    return {
-      type,
-      symbol,
-      firstTerm: problem.answer,
-      secondTerm: problem.secondTerm,
-      answer: problem.firstTerm,
-    };
-  });
-}
-
-// 0 12 10 10
 export function multiplication(options: options) {
   options.symbol =  `x`;
   options.type = `multiplication`;
@@ -103,6 +93,57 @@ export function division(options: options) {
   const problems = inverseProblem(multiplication(options), `÷`, `division`);
   if (oldPrintOption) console.log(problems);
   return problems;
+}
+
+function mathCommon(options: options) {
+  options.randomOrder = options.randomOrder ?? true;
+  options.primaryMinThruMax = options.primaryMinThruMax ?? false;
+  options.rows = options.rows ?? ROWS;
+  options.cols = options.cols ?? COLS;
+  options.min = options.min ?? MIN;
+  options.max = options.max ?? MAX;
+
+  validateOptions(options);
+
+  const problems: IProblem[] = [];
+
+  for (let i = 0; i < options.rows; i++) {
+    for (let j = 0; j < options.cols; j++) {
+
+      let newProblem = generateProblem(options);
+
+      if (problems.length > 0) {
+        // if at least 1 entry in array exists && new problem is the same as the last problem
+        while (
+          problems[problems.length - 1].firstTerm === newProblem.firstTerm &&
+          problems[problems.length - 1].secondTerm === newProblem.secondTerm
+        ) {
+          // generate a new problem (no duplicates)
+          newProblem = generateProblem(options);
+        }
+      }
+
+      problems.push(newProblem);
+    }
+  }
+  return problems;
+}
+
+/**
+ * Flip input addition problems to be subtraction problems
+ * @param problems
+ * @returns
+ */
+function inverseProblem(problems: IProblem[], symbol: operator, type: operation) {
+  return problems.map<IProblem>((problem: IProblem) => {
+    return {
+      type,
+      symbol,
+      firstTerm: problem.answer,
+      secondTerm: problem.secondTerm,
+      answer: problem.firstTerm,
+    };
+  });
 }
 
 function generateProblem(options: options) {
@@ -157,40 +198,6 @@ function validateOptions(options: options) {
   if (options.secondTerm && options.primaryMinThruMax === false) {
     throw new Error(`Error: cannot generate sheet of the same problem`);
   }
-}
-
-function mathCommon(options: options) {
-  options.randomOrder = options.randomOrder ?? true;
-  options.primaryMinThruMax = options.primaryMinThruMax ?? false;
-  options.rows = options.rows ?? ROWS;
-  options.cols = options.cols ?? COLS;
-  options.min = options.min ?? MIN;
-  options.max = options.max ?? MAX;
-
-  validateOptions(options);
-
-  const problems: IProblem[] = [];
-
-  for (let i = 0; i < options.rows; i++) {
-    for (let j = 0; j < options.cols; j++) {
-
-      let newProblem = generateProblem(options);
-
-      if (problems.length > 0) {
-        // if at least 1 entry in array exists && new problem is the same as the last problem
-        while (
-          problems[problems.length - 1].firstTerm === newProblem.firstTerm &&
-          problems[problems.length - 1].secondTerm === newProblem.secondTerm
-        ) {
-          // generate a new problem (no duplicates)
-          newProblem = generateProblem(options);
-        }
-      }
-
-      problems.push(newProblem);
-    }
-  }
-  return problems;
 }
 
 export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
