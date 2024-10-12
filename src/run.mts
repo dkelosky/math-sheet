@@ -14,7 +14,7 @@ for (let i = 1; i <= loops; i++) {
     //     randomOrder: true,
     //     min: 0,
     //     max: 10,
-    //     oneThruFirst: true,
+    //     primaryMinThruMax: true,
     //     // secondTerm: 5,
     //     print: true,
     // });
@@ -26,7 +26,7 @@ for (let i = 1; i <= loops; i++) {
     //     randomOrder: false,
     //     min: 0,
     //     max: 10,
-    //     oneThruFirst: true,
+    //     primaryMinThruMax: true,
     //     secondTerm: i,
     //     print: true,
     // });
@@ -38,7 +38,7 @@ for (let i = 1; i <= loops; i++) {
     //     randomOrder: false,
     //     min: 0,
     //     max: 10,
-    //     oneThruFirst: true,
+    //     primaryMinThruMax: true,
     //     secondTerm: 4,
     //     print: true,
     // });
@@ -46,7 +46,7 @@ for (let i = 1; i <= loops; i++) {
     const problems = division({
         primaryTerm: 10,
         randomOrder: false,
-        oneThruFirst: true,
+        primaryMinThruMax: true,
         secondTerm: i,
         print: true,
     });

@@ -6,6 +6,8 @@ type answer = (first: number, second: number) => number;
 
 export const ROWS = 10;
 export const COLS = 10;
+export const MIN = 0;
+export const MAX = 10;
 
 const PAD_LEN = 4;
 
@@ -23,7 +25,7 @@ interface options {
   rows?: number;
   cols?: number;
   randomOrder?: boolean;
-  oneThruFirst?: boolean; // means first parm will be a random [int 1 - first parm]
+  primaryMinThruMax?: boolean; // means first parm will be a random [int 1 - first parm]
   primaryTerm: number;
   secondTerm?: number;
   type?: operation;
@@ -46,10 +48,8 @@ function getDividend(divisibleBy: number, min: number, max: number) {
   return num;
 }
 
-function randomizeOrder(extraTerm: number, primaryTerm: number) {
-  return getRandomInt(0, 1) === 1
-    ? [primaryTerm, extraTerm]
-    : [extraTerm, primaryTerm];
+function randomizeOrder(mainTerm: number, extraTerm: number) {
+  return getRandomInt(0, 1) === 1 ? [mainTerm, extraTerm] : [extraTerm, mainTerm];
 }
 
 export function addition(options: options) {
@@ -106,20 +106,11 @@ export function division(options: options) {
 }
 
 function generateProblem(options: options) {
-  let mainTerm = options.oneThruFirst
-    ? getRandomInt(options.min!, options.max!)
-    : options.primaryTerm; //alternative term is primary term or min - max if `oneThruFirst` specified
+  // primaryTerm or min - max if `primaryMinThruMax` specified
+  const mainTerm = options.primaryMinThruMax ? getRandomInt(options.min!, options.max!) : options.primaryTerm;
+  const extraTerm = options.secondTerm ?? getRandomInt(options.min!, options.max!);
 
-  let extraTerm;
-
-  let firstTerm;
-  let secondTerm;
-
-  extraTerm = options.secondTerm ?? getRandomInt(options.min!, options.max!);
-  [firstTerm, secondTerm] = options.randomOrder
-    ? randomizeOrder(extraTerm, mainTerm)
-    : [mainTerm, extraTerm];
-
+  const [firstTerm, secondTerm] = options.randomOrder ? randomizeOrder(mainTerm, extraTerm) : [mainTerm, extraTerm];
 
   const problem: IProblem = {
     firstTerm,
@@ -163,18 +154,18 @@ function validateOptions(options: options) {
   if (options.symbol === `x` && options.type !== `multiplication`) {
     throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.type}'.`);
   }
-  if (options.secondTerm && options.oneThruFirst === false) {
+  if (options.secondTerm && options.primaryMinThruMax === false) {
     throw new Error(`Error: cannot generate sheet of the same problem`);
   }
 }
 
 function mathCommon(options: options) {
   options.randomOrder = options.randomOrder ?? true;
-  options.oneThruFirst = options.oneThruFirst ?? false;
-  options.rows = options.rows ?? 10;
-  options.cols = options.cols ?? 10;
-  options.min = options.min ?? 0;
-  options.max = options.max ?? 10;
+  options.primaryMinThruMax = options.primaryMinThruMax ?? false;
+  options.rows = options.rows ?? ROWS;
+  options.cols = options.cols ?? COLS;
+  options.min = options.min ?? MIN;
+  options.max = options.max ?? MAX;
 
   validateOptions(options);
 
@@ -205,7 +196,7 @@ function mathCommon(options: options) {
 export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
   let digitLen = digit.toString().length;
   if (digitLen > padLen) {
-    console.log(`unexpected len`);
+    console.log(`Error: unexpected len '${digitLen}' !> ${padLen}`);
     process.exit(1);
   }
   const lenToPad = padLen - digitLen;
