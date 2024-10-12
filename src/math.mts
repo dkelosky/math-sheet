@@ -21,25 +21,18 @@ interface options {
   cols: number;
   randomOrder?: boolean;
   oneThruFirst?: boolean; // means first parm will be a random [int 1 - first parm]
-  subtrahend?: number;
-}
-
-interface fullOptions extends options{
-  tpye: operation;
-  symbol: operator;
-  answer: answer,
-  primaryTerm: number,
-}
-
-interface ITerms {
-  firstTerm: number;
-  secondTerm: number;
+  primaryTerm: number;
+  secondTerm?: number;
+  type?: operation;
+  symbol?: operator;
+  print?: boolean;
+  answer?: answer;
 }
 
 function getRandomInt(min: number, max: number) {
   const minCeiled = Math.ceil(min);
   const maxFloored = Math.floor(max + 1);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
 }
 
 function getDividend(divisibleBy: number, min: number, max: number) {
@@ -51,39 +44,48 @@ function getDividend(divisibleBy: number, min: number, max: number) {
 }
 
 function randomizeOrder(extraTerm: number, primaryTerm: number) {
-  return (getRandomInt(0, 1) === 1) ? [primaryTerm, extraTerm] : [extraTerm, primaryTerm];
+  return getRandomInt(0, 1) === 1
+    ? [primaryTerm, extraTerm]
+    : [extraTerm, primaryTerm];
+}
+
+export function addition(options: options) {
+  options.symbol = `+`;
+  options.type = `addition`;
+  options.answer = (first, second) => first + second;
+  const problems = mathCommon(options);
+  if (options.print) console.log(problems);
+  return problems;
 }
 
 /**
- * addend + addend = sum
- * @param primaryTerm
- * @param min
- * @param max
- * @param rows
- * @param cols
+ * Calls addition and alters problems
+ * @param options
+ * @returns
  */
-export function addition(
-  addend: number,
-  min = 0,
-  max = 12,
-  rows = 10,
-  cols = 10,
-  oneThruFirst = false
-) {
-  const options: fullOptions = {
-    symbol: `+`,
-    tpye: `addition`,
-    answer: (first, second) => first + second,
-    primaryTerm: addend,
-    min,
-    max,
-    rows,
-    cols,
-    oneThruFirst,
-  };
-  return mathCommon(
-    options
-  );
+export function subtraction(options: options) {
+  let oldPrintOption = options.print;
+  options.print = false;
+  const problems = inverseAddition(addition(options));
+  if (oldPrintOption) console.log(problems);
+  return problems;
+}
+
+/**
+ * Flip input addition problems to be subtraction problems
+ * @param problems
+ * @returns
+ */
+function inverseAddition(problems: IProblem[]) {
+  return problems.map<IProblem>((problem: IProblem) => {
+    return {
+      type: `subtraction`,
+      symbol: `-`,
+      firstTerm: problem.answer,
+      secondTerm: problem.secondTerm,
+      answer: problem.firstTerm,
+    };
+  });
 }
 
 /**
@@ -101,9 +103,9 @@ export function multiplication(
   rows = 10,
   cols = 10
 ) {
-  const options: fullOptions = {
+  const options: options = {
     symbol: `x`,
-    tpye: `multiplication`,
+    type: `multiplication`,
     answer: (first, second) => first * second,
     primaryTerm: multiplier,
     min,
@@ -111,44 +113,7 @@ export function multiplication(
     rows,
     cols,
   };
-  return mathCommon(
-    options
-  );
-}
-
-/**
- * minuend - subtrahend = difference
- * @param subtrahend
- * @param min
- * @param max
- * @param rows
- * @param cols
- */
-export function subtraction(
-  minuend: number,
-  min = minuend,
-  max = 20,
-  rows = 10,
-  cols = 10,
-  oneThruFirst = false,
-  subtrahend?: number
-) {
-  const options: fullOptions = {
-    symbol: `-`,
-    tpye: `subtraction`,
-    answer:  (first, second) => first - second,
-    primaryTerm: minuend,
-    min,
-    max,
-    rows,
-    cols,
-    randomOrder: false,
-    oneThruFirst,
-    subtrahend,
-  };
-  return mathCommon(
-    options
-  );
+  return mathCommon(options);
 }
 
 /**
@@ -166,9 +131,9 @@ export function division(
   rows = 10,
   cols = 10
 ) {
-  const options: fullOptions = {
+  const options: options = {
     symbol: `÷`,
-    tpye: `division`,
+    type: `division`,
     answer: (first, second) => first / second,
     primaryTerm: divisor,
     min,
@@ -177,117 +142,107 @@ export function division(
     cols,
     randomOrder: false,
   };
-  return mathCommon(
-    options
-  );
+  return mathCommon(options);
 }
 
-function generateProblem(
-  symbol: operator,
-  type: operation,
-  answer: answer,
-  primaryTerm: number,
-  options: options
-) {
-  let mainTerm = options.oneThruFirst ? getRandomInt(options.min, options.max) : primaryTerm; //alternative term is primary term or min - max if `oneThruFirst` specified
+function generateProblem(options: options) {
+  let mainTerm = options.oneThruFirst
+    ? getRandomInt(options.min, options.max)
+    : options.primaryTerm; //alternative term is primary term or min - max if `oneThruFirst` specified
+
   let extraTerm;
+
   let firstTerm;
   let secondTerm;
 
-  switch (type) {
+  switch (options.type) {
     case `division`:
-      extraTerm = getDividend(primaryTerm, options.min, options.max);
+      extraTerm = getDividend(options.primaryTerm, options.min, options.max);
       [firstTerm, secondTerm] = [extraTerm, mainTerm];
-      break;
-    case `subtraction`:
-      if (options.subtrahend) {
-        extraTerm = options.subtrahend;
-        [firstTerm, secondTerm] = [mainTerm, extraTerm];
-        console.log(`mainterm is ${mainTerm} extra is ${extraTerm}`);
-        console.log(`first ${firstTerm} second ${secondTerm}`)
-      } else {
-        const rando = getRandomInt(options.min, mainTerm);
-        [firstTerm, secondTerm] = [mainTerm, rando];
-      }
       break;
     case `addition`:
     case `multiplication`:
     default:
-      extraTerm = getRandomInt(options.min, options.max);
-      [firstTerm, secondTerm] = options.randomOrder ? randomizeOrder(extraTerm, mainTerm) : [mainTerm, extraTerm];
+      extraTerm = options.secondTerm ?? getRandomInt(options.min, options.max);
+      [firstTerm, secondTerm] = options.randomOrder
+        ? randomizeOrder(extraTerm, mainTerm)
+        : [mainTerm, extraTerm];
       break;
   }
 
   const problem: IProblem = {
     firstTerm,
     secondTerm,
-    answer: answer(firstTerm, secondTerm),
-    symbol,
-    type,
+    answer: options.answer!(firstTerm, secondTerm),
+    symbol: options.symbol!,
+    type: options.type!,
   };
 
   return problem;
 }
 
-function validateOptions(options: fullOptions) {
-  if (options.symbol === `+` && options.tpye !== `addition`) {
-    throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.tpye}'.`)
+function validateOptions(options: options) {
+  if (!options.type) {
+    throw new Error(`Error: type is required`);
   }
-  if (options.symbol === `-` && options.tpye !== `subtraction`) {
-    throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.tpye}'.`)
+
+  if (!options.symbol) {
+    throw new Error(`Error: symbol is required`);
   }
-  if (options.symbol === `x` && options.tpye !== `multiplication`) {
-    throw new Error(`Error: symbol '${options.symbol}' does not match operation '${options.tpye}'.`)
+
+  if (!options.answer) {
+    throw new Error(`Error: answer is required`);
   }
-  if(options.tpye !== `subtraction` && options.subtrahend) {
-    throw new Error(`Error: cannot use subtrahend unless using ${options.tpye}`)
+
+  if (options.symbol === `+` && options.type !== `addition`) {
+    throw new Error(
+      `Error: symbol '${options.symbol}' does not match operation '${options.type}'.`
+    );
   }
-  console.log(options.subtrahend! + '----' +  options.min)
-  if (options.subtrahend && options.min < options.subtrahend) {
-    throw new Error(`Error: min cannot be less than subtrahend`);
+  if (options.symbol === `-` && options.type !== `subtraction`) {
+    throw new Error(
+      `Error: symbol '${options.symbol}' does not match operation '${options.type}'.`
+    );
+  }
+  if (options.symbol === `x` && options.type !== `multiplication`) {
+    throw new Error(
+      `Error: symbol '${options.symbol}' does not match operation '${options.type}'.`
+    );
+  }
+  if (options.secondTerm && options.oneThruFirst === false) {
+    throw new Error(
+      `Error: cannot generate sheet of the same problem`
+    );
   }
 }
 
-function mathCommon(
-  options: fullOptions
-) {
-  const symbol = options.symbol;
-  const type = options.tpye;
-  const answer = options.answer;
-  const primaryTerm = options.primaryTerm;
-
+function mathCommon(options: options) {
   options.randomOrder = options.randomOrder ?? true;
   options.oneThruFirst = options.oneThruFirst ?? false;
 
   validateOptions(options);
 
-    const problems: IProblem[] = [];
+  const problems: IProblem[] = [];
 
-    for (let i = 0; i < options.rows; i++) {
-      for (let j = 0; j < options.cols; j++) {
+  for (let i = 0; i < options.rows; i++) {
+    for (let j = 0; j < options.cols; j++) {
+      let newProblem = generateProblem(options);
 
-        let newProblem = generateProblem(symbol, type, answer, primaryTerm, options);
-
-        if (problems.length > 0) {
-          // if at least 1 entry in array exists && new problem is the same as the last problem
-          while (
-            problems[problems.length - 1].firstTerm === newProblem.firstTerm &&
-            problems[problems.length - 1].secondTerm === newProblem.secondTerm
-          ) {
-            // generate a new problem (no duplicates)
-            newProblem = generateProblem(symbol, type, answer, primaryTerm, options);
-          }
+      if (problems.length > 0) {
+        // if at least 1 entry in array exists && new problem is the same as the last problem
+        while (
+          problems[problems.length - 1].firstTerm === newProblem.firstTerm &&
+          problems[problems.length - 1].secondTerm === newProblem.secondTerm
+        ) {
+          // generate a new problem (no duplicates)
+          newProblem = generateProblem(options);
         }
-
-        problems.push(newProblem);
       }
-    }
 
-    return problems;
-    // console.log(problems);
-    // generateHtml(problems, options.rows, options.cols, index, false);
-    // if (options.includeAnswer) generateHtml(problems, options.rows, options.cols, index, true);
-  // }
+      problems.push(newProblem);
+    }
+  }
+  return problems;
 }
 
 export function leftPad(digit: number, padLen = PAD_LEN, padChar = ` `) {
@@ -309,7 +264,7 @@ export function generateHtml(
   problems: IProblem[],
   rows = 10,
   cols = 10,
-  suffix = '',
+  suffix = "",
   includeAnswer = false
 ) {
   const padLen = PAD_LEN;
@@ -388,7 +343,9 @@ export function generateHtml(
   });
 
   htmlDocument += tableFooter + footer;
-  const file = includeAnswer ? `answers${suffix}.html` : `problems${suffix}.html`;
+  const file = includeAnswer
+    ? `answers${suffix}.html`
+    : `problems${suffix}.html`;
   writeFileSync(file, htmlDocument);
   console.log(`wrote ${file}`);
 }
