@@ -34,7 +34,7 @@ interface options {
   answer?: answer;
 }
 
-function getRandomInt(min: number, max: number) {
+export function getRandomInt(min: number, max: number) {
   const minCeiled = Math.ceil(min);
   const maxFloored = Math.floor(max + 1);
   return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
@@ -68,6 +68,15 @@ export function addition(options: options) {
   if (options.print) console.log(problems);
   return problems;
 }
+
+export function mixed(options: options) {
+  let oldPrintOption = options.print;
+  options.print = false;
+  const problems = inverseProblem(addition(options), `-`, `subtraction`, true);
+  if (oldPrintOption) console.log(problems);
+  return problems;
+}
+
 
 export function subtraction(options: options) {
   let oldPrintOption = options.print;
@@ -134,9 +143,16 @@ function mathCommon(options: options) {
  * @param problems
  * @returns
  */
-function inverseProblem(problems: IProblem[], symbol: operator, type: operation) {
+function inverseProblem(problems: IProblem[], symbol: operator, type: operation, random = false) {
   return problems.map<IProblem>((problem: IProblem) => {
-    return {
+    // if random request and random ===1 flip
+    return (random && getRandomInt(0, 1) === 1) ? {
+      type: problem.type,
+      symbol: problem.symbol,
+      firstTerm: problem.firstTerm,
+      secondTerm: problem.secondTerm,
+      answer: problem.answer,
+    } : {
       type,
       symbol,
       firstTerm: problem.answer,
